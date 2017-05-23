@@ -1,0 +1,569 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="https://npmcdn.com/leaflet@0.7.7/dist/leaflet.css" />
+    <link type="text/css" rel="stylesheet" href="css/materialize.min.css" media="screen,projection" />
+    <link type="text/css" rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
+    
+    <style>
+        html,
+        body{
+            height: 100%;
+            min-height: 900px;
+        }
+        
+        #magnifier {
+            height: 500px;
+            width: 500px;
+        }
+        
+        #mapmagnifier {
+            height: 100%;
+            width: 100%;
+        }
+        
+        #tableform {
+            overflow: auto;
+            display: none;
+            font-size: 12px
+        }
+        
+        .statuswindow {
+            height: 50px;
+            width: 250px;
+            background-color: white;
+            box-shadow: 2px 2px 2px;
+            top: 20px;
+            right: 10px;
+            position: fixed;
+            z-index:801;
+            padding-left: 10px;
+            padding-top: 10px;
+            border-radius: 10px;
+        }
+        
+        .statusmsg {
+            padding-left: 50px;
+        }
+        
+        .preloader {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            overflow: clear;
+        }
+        
+        .buttononmap {
+            position: absolute;
+            width: 100px;
+            top: 80px;
+            z-index: 801;
+            right: 10px;
+            background-color: white;
+            border-radius: 10px;
+        }
+        
+        .button2onmap {
+            position: fixed;
+            width: 100px;
+            top: 110px;
+            z-index: 801;
+            right: 10px;
+            background-color: white;
+            border-radius: 10px;
+        }
+        
+        .button3onmap {
+            position: fixed;
+            width: 100px;
+            top: 140px;
+            z-index: 801;
+            right: 10px;
+            background-color: white;
+            border-radius: 10px;
+        }
+        
+        .button4onmap {
+            position: fixed;
+            width: 100px;
+            top: 170px;
+            z-index: 801;
+            right: 10px;
+            background-color: white;
+            border-radius: 10px;
+        }
+        
+        .button5onmap {
+            position: fixed;
+            width: 200px;
+            top: 200px;
+            z-index: 801;
+            right: 10px;
+            background-color: white;
+            border-radius: 10px;
+        }
+
+        .button6onmap {
+            position: fixed;
+            width: 100px;
+            top: 230px;
+            z-index: 801;
+            right: 10px;
+            background-color: white;
+            border-radius: 10px;
+        }
+        
+        table {
+            border-collapse: collapse;
+        }
+        
+        .overrideRow {
+            margin-bottom: 0px;
+        }
+        
+        .dropReasonsChart{
+            
+        background: rgba(1, 1, 1, 0.5);
+        }
+        
+        
+    </style>
+
+    <script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
+    <script src="https://npmcdn.com/leaflet@0.7.7/dist/leaflet.js"></script>
+    <script src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/1.10.11/js/jquery.dataTables.min.js"></script>
+    <script type="text/javascript" src="js/materialize.min.js"></script>
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+    <script src="https://code.highcharts.com/highcharts-3d.js"></script>
+    <script src="https://code.highcharts.com/modules/exporting.js"></script>
+    <script src="js/markerclusterer.js"></script>
+    <script src="js/heatmap.js"></script>
+    <script src="js/leaflet-heatmap.js"></script>
+    <script src="js/webapp.js"></script>
+
+</head>
+
+<body onload="initialize()">
+    
+    <header class="blue-header"> 
+    
+    <div class="logo"> 
+    Leaflet 
+    </div>
+    
+
+    </header>
+    
+    
+    <section> 
+        
+        <div id="container">
+        <div id="map-canvas">
+      
+        </div>
+        
+        <aside class="side-menu-bar">
+        <button class="buttononmap" onclick="plotsector()">Plot Sector</button>
+        <button class="button2onmap" onclick="plotdata()">Plot Data</button>
+        <button class="button3onmap" onclick="clear_map()">Clear Map</button>
+        <button class="button4onmap" onclick="ShowDialog()">Magnifier</button>
+        <button class="button5onmap" onclick="ShowConflictDialog()">PSC/PCI/RSN Planning</button>
+        <button class="button6onmap" onclick="DropCallReasons()">Drop Call Reasons</button>
+        
+        </aside>
+    
+        </div>
+    
+    </section>
+    
+    
+    
+
+    <div>
+        <div class="statuswindow">
+            <div class="preloader" id="preloader">
+
+                <div class="preloader-wrapper small active">
+                    <div class="spinner-layer spinner-blue-only">
+                        <div class="circle-clipper left">
+                            <div class="circle"></div>
+                        </div>
+                        <div class="gap-patch">
+                            <div class="circle"></div>
+                        </div>
+                        <div class="circle-clipper right">
+                            <div class="circle"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="statusWindow" class="statusmsg"></div>
+        </div>
+
+      
+        
+    </div>
+
+
+
+    <div id="tableform" title="Reuse Form">
+
+        <div class="row overrideRow">
+
+            <div class="col s2">
+                <p>Choose Method:</p>
+                <select id="method" onchange="methodChange()">
+                    <option>PSC</option>
+                    <option>PCI</option>
+                    <option>RSN</option>
+                </select>
+            </div>
+
+            <div class="col s4">
+                <p>Enter Circle Search Radius(m):</p>
+                <input type="text" id="circleRad"></input>
+            </div>
+
+        </div>
+
+        <button class="btn waves-effect waves-light" onclick="initializeWorkSpace()">Initialize WorkSpace
+        </button>
+
+        <p>Import New Site Details</p>
+
+        <div class="row valign-wrapper">
+            <div class="col s6 file-field input-field">
+                <div class="btn">
+                    <span>File</span>
+                    <input type="file" class="importnewSiteFile">
+                </div>
+                <div class="file-path-wrapper">
+                    <input class="file-path validate" type="text">
+                </div>
+            </div>
+
+            <div class="col s6">
+                <a style="color:#FFFFFF;" href="javascript:void(0)" id="importNewSite" class="importNewSite waves-effect waves-light btn">
+                    <i class="mdi-file-file-upload left"></i>Import
+                </a>
+            </div>
+        </div>
+
+        <div class="row overrideRow">
+            <div class="col s2" id="siteSelection">
+                <p>Select Site:</p>
+                <select id="siteSelected" onchange="siteSelectedChange()">
+                </select>
+            </div>
+        </div>
+
+        <button class="btn waves-effect waves-light" onclick="ShowPSCConflict()">Submit</button>
+        <button style="position:relative; float:right;" class="btn waves-effect waves-light" onclick="assignValues()">Assign Values</button>
+
+        <br></br>
+        <table id="maintable" class="display highlight bordered" cellspacing="0" width="100%" style="font-size:10;">
+            <thead>
+                <tr>
+                    <th data-field="id">Free Group Values</th>
+                </tr>
+            </thead>
+
+            <tbody id="reusetable">
+
+            </tbody>
+        </table>
+
+        <br>
+
+        <button style="position:relative; float:right;" class="btn waves-effect waves-light" onclick="downloadChanges()">Download Changes</button>
+
+    </div>
+
+
+    <div style="display:none;" id="magnifier" title="Map Satelite View">
+
+        <div id="mapmagnifier">
+
+        </div>
+
+    </div>
+
+    <div style="display:none;" id="assignValues" title="Assign Values">
+
+        <table id="maintable2" cellspacing="0" width="100%" style="font-size:10;">
+            <thead>
+                <tr>
+                    <th data-field="Checkbox"></th>
+                    <th data-field="Circle">Circle</th>
+                    <th data-field="Operator">Operator</th>
+                    <th data-field="Technology">Technology</th>
+                    <th data-field="Sitename">Sitename</th>
+                    <th data-field="Cellname">Cellname</th>
+                    <th data-field="Latitude">Latitude</th>
+                    <th data-field="Longitude">Longitude</th>
+                    <th data-field="Azimuth">Azimuth</th>
+                    <th data-field="Status">Status</th>
+                    <th data-field="Beamwidth">Beamwidth</th>
+                    <th id="methodTable" >PSC</th>
+                </tr>
+            </thead>
+
+            <tbody id="inputTable">
+
+                <tr>
+                    <td>
+                        <input data-id="1" type="checkbox" class="newSiteCheck" id="newSiteCheck1" />
+                        <label for="newSiteCheck1">1</label>
+                    </td>
+                    <td>
+                        <input type="text" name="newSitecircle1" id="newSitecircle1" />
+                    </td>
+                    <td>
+                        <input type="text" name="newSiteOperator1" id="newSiteOperator1" />
+                    </td>
+                    <td>
+                        <input type="text" name="newSiteTechnology1" id="newSiteTechnology1" />
+                    </td>
+                    <td>
+                        <input type="text" name="newSiteSitename1" id="newSiteSitename1" />
+                    </td>
+                    <td>
+                        <input type="text" name="newSiteCellname1" id="newSiteCellname1" />
+                    </td>
+                    <td>
+                        <input type="text" name="newSiteLatitude1" id="newSiteLatitude1" />
+                    </td>
+                    <td>
+                        <input type="text" name="newSiteLongitude1" id="newSiteLongitude1" />
+                    </td>
+                    <td>
+                        <input type="text" name="newSiteAzimuth1" id="newSiteAzimuth1" />
+                    </td>
+                    <td>
+                        <input type="text" name="newSiteStatus1" id="newSiteStatus1" />
+                    </td>
+                    <td>
+                        <input type="text" name="newSiteBeamwidth1" id="newSiteBeamwidth1" />
+                    </td>
+                    <td>
+                        <input type="text" name="newSiteProperty1" id="newSiteProperty1" />
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <input data-id="2" type="checkbox" class="newSiteCheck" id="newSiteCheck2" />
+                        <label for="newSiteCheck2">2</label>
+                    </td>
+                    <td>
+                        <input type="text" name="newSitecircle2" id="newSitecircle2" />
+                    </td>
+                    <td>
+                        <input type="text" name="newSiteOperator2" id="newSiteOperator2" />
+                    </td>
+                    <td>
+                        <input type="text" name="newSiteTechnology2" id="newSiteTechnology2" />
+                    </td>
+                    <td>
+                        <input type="text" name="newSiteSitename2" id="newSiteSitename2" />
+                    </td>
+                    <td>
+                        <input type="text" name="newSiteCellname2" id="newSiteCellname2" />
+                    </td>
+                    <td>
+                        <input type="text" name="newSiteLatitude2" id="newSiteLatitude2" />
+                    </td>
+                    <td>
+                        <input type="text" name="newSiteLongitude2" id="newSiteLongitude2" />
+                    </td>
+                    <td>
+                        <input type="text" name="newSiteAzimuth2" id="newSiteAzimuth2" />
+                    </td>
+                    <td>
+                        <input type="text" name="newSiteStatus2" id="newSiteStatus2" />
+                    </td>
+                    <td>
+                        <input type="text" name="newSiteBeamwidth2" id="newSiteBeamwidth2" />
+                    </td>
+                    <td>
+                        <input type="text" name="newSiteProperty2" id="newSiteProperty2" />
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <input data-id="3" type="checkbox" class="newSiteCheck" id="newSiteCheck3" />
+                        <label for="newSiteCheck3">3</label>
+                    </td>
+                    <td>
+                        <input type="text" name="newSitecircle3" id="newSitecircle3" />
+                    </td>
+                    <td>
+                        <input type="text" name="newSiteOperator3" id="newSiteOperator3" />
+                    </td>
+                    <td>
+                        <input type="text" name="newSiteTechnology3" id="newSiteTechnology3" />
+                    </td>
+                    <td>
+                        <input type="text" name="newSiteSitename3" id="newSiteSitename3" />
+                    </td>
+                    <td>
+                        <input type="text" name="newSiteCellname3" id="newSiteCellname3" />
+                    </td>
+                    <td>
+                        <input type="text" name="newSiteLatitude3" id="newSiteLatitude3" />
+                    </td>
+                    <td>
+                        <input type="text" name="newSiteLongitude3" id="newSiteLongitude3" />
+                    </td>
+                    <td>
+                        <input type="text" name="newSiteAzimuth3" id="newSiteAzimuth3" />
+                    </td>
+                    <td>
+                        <input type="text" name="newSiteStatus3" id="newSiteStatus3" />
+                    </td>
+                    <td>
+                        <input type="text" name="newSiteBeamwidth3" id="newSiteBeamwidth3" />
+                    </td>
+                    <td>
+                        <input type="text" name="newSiteProperty3" id="newSiteProperty3" />
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <input data-id="4" type="checkbox" class="newSiteCheck" id="newSiteCheck4" />
+                        <label for="newSiteCheck4">4</label>
+                    </td>
+                    <td>
+                        <input type="text" name="newSitecircle4" id="newSitecircle4" />
+                    </td>
+                    <td>
+                        <input type="text" name="newSiteOperator4" id="newSiteOperator4" />
+                    </td>
+                    <td>
+                        <input type="text" name="newSiteTechnology4" id="newSiteTechnology4" />
+                    </td>
+                    <td>
+                        <input type="text" name="newSiteSitename4" id="newSiteSitename4" />
+                    </td>
+                    <td>
+                        <input type="text" name="newSiteCellname4" id="newSiteCellname4" />
+                    </td>
+                    <td>
+                        <input type="text" name="newSiteLatitude4" id="newSiteLatitude4" />
+                    </td>
+                    <td>
+                        <input type="text" name="newSiteLongitude4" id="newSiteLongitude4" />
+                    </td>
+                    <td>
+                        <input type="text" name="newSiteAzimuth4" id="newSiteAzimuth4" />
+                    </td>
+                    <td>
+                        <input type="text" name="newSiteStatus4" id="newSiteStatus4" />
+                    </td>
+                    <td>
+                        <input type="text" name="newSiteBeamwidth4" id="newSiteBeamwidth4" />
+                    </td>
+                    <td>
+                        <input type="text" name="newSiteProperty4" id="newSiteProperty4" />
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <input data-id="5" type="checkbox" class="newSiteCheck" id="newSiteCheck5" />
+                        <label for="newSiteCheck5">5</label>
+                    </td>
+                    <td>
+                        <input type="text" name="newSitecircle5" id="newSitecircle5" />
+                    </td>
+                    <td>
+                        <input type="text" name="newSiteOperator5" id="newSiteOperator5" />
+                    </td>
+                    <td>
+                        <input type="text" name="newSiteTechnology5" id="newSiteTechnology5" />
+                    </td>
+                    <td>
+                        <input type="text" name="newSiteSitename5" id="newSiteSitename5" />
+                    </td>
+                    <td>
+                        <input type="text" name="newSiteCellname5" id="newSiteCellname5" />
+                    </td>
+                    <td>
+                        <input type="text" name="newSiteLatitude5" id="newSiteLatitude5" />
+                    </td>
+                    <td>
+                        <input type="text" name="newSiteLongitude5" id="newSiteLongitude5" />
+                    </td>
+                    <td>
+                        <input type="text" name="newSiteAzimuth5" id="newSiteAzimuth5" />
+                    </td>
+                    <td>
+                        <input type="text" name="newSiteStatus5" id="newSiteStatus5" />
+                    </td>
+                    <td>
+                        <input type="text" name="newSiteBeamwidth5" id="newSiteBeamwidth5" />
+                    </td>
+                    <td>
+                        <input type="text" name="newSiteProperty5" id="newSiteProperty5" />
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <input data-id="6" type="checkbox" class="newSiteCheck" id="newSiteCheck6" />
+                        <label for="newSiteCheck6">6</label>
+                    </td>
+                    <td>
+                        <input type="text" name="newSitecircle6" id="newSitecircle6" />
+                    </td>
+                    <td>
+                        <input type="text" name="newSiteOperator6" id="newSiteOperator6" />
+                    </td>
+                    <td>
+                        <input type="text" name="newSiteTechnology6" id="newSiteTechnology6" />
+                    </td>
+                    <td>
+                        <input type="text" name="newSiteSitename6" id="newSiteSitename6" />
+                    </td>
+                    <td>
+                        <input type="text" name="newSiteCellname6" id="newSiteCellname6" />
+                    </td>
+                    <td>
+                        <input type="text" name="newSiteLatitude6" id="newSiteLatitude6" />
+                    </td>
+                    <td>
+                        <input type="text" name="newSiteLongitude6" id="newSiteLongitude6" />
+                    </td>
+                    <td>
+                        <input type="text" name="newSiteAzimuth6" id="newSiteAzimuth6" />
+                    </td>
+                    <td>
+                        <input type="text" name="newSiteStatus6" id="newSiteStatus6" />
+                    </td>
+                    <td>
+                        <input type="text" name="newSiteBeamwidth6" id="newSiteBeamwidth6" />
+                    </td>
+                    <td>
+                        <input type="text" name="newSiteProperty6" id="newSiteProperty6" />
+                    </td>
+                </tr>
+
+            </tbody>
+        </table>
+        <br>
+        <button style="position:relative; float:right;" class="btn waves-effect waves-light" onclick='$("#assignValues").dialog("close");'>Cancel</button>
+        <button style="position:relative; float:right;margin-right:10px" class="btn waves-effect waves-light" onclick="commitValues()">Commit Values</button>
+
+
+    </div>
+
+<div class="dropReasonsChart" id="dropReasonsChart" style="display:none;" title="Drop Reasons">
+</div>
+
+</body>
+
+</html>

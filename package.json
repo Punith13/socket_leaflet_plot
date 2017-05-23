@@ -1,0 +1,19 @@
+{
+  "name": "socketio",
+  "version": "1.0.0",
+  "description": "stream json response",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Punith Ujwal Nayak",
+  "license": "ISC",
+  "dependencies": {
+    "compress": "^0.99.0",
+    "compression": "^1.6.2",
+    "expres": "0.0.5",
+    "express": "^4.13.4",
+    "mssql": "^3.1.2",
+    "socket.io": "^1.4.5"
+  }
+}

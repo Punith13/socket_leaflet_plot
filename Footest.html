@@ -1,0 +1,21 @@
+<!doctype html> 
+<html> 
+<head> 
+<script> 
+
+var foo = {
+    bar: function() { return this.baz; },
+    baz: 1
+  };
+    
+
+    
+(function(){
+    return console.log(typeof arguments[0]());
+  })(foo.bar);
+    
+</script>
+</head>
+<body>
+</body>
+</html>
